@@ -3,8 +3,8 @@
 `cfg.epic` etc. instead of repeating `os.environ.get(...)` + parsing.
 
 Paths (`.env`, `data/`) are anchored to the repo root via this file's
-location, not the process CWD, so the notebooks resolve the same files
-whether the kernel runs from the repo root or from `notebooks/`."""
+location, not the process CWD, so the notebooks resolve the same files even
+if a kernel starts somewhere other than the repo root."""
 
 import os
 from dataclasses import dataclass

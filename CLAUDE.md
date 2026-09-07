@@ -16,7 +16,7 @@ pyproject.toml            # package metadata + [dev] extra (pytest, jupyter, nbc
 src/igmarket/             # the library the notebooks import
   config.py  ig_session.py  candle_csv.py  candle_db.py  backtest.py
   constants/              # field-name / mapping tables, one concern per module
-notebooks/                # the runnable entry points, numbered in pipeline order
+0N_*.ipynb                # the runnable entry points, at the repo root, numbered in pipeline order
   01_download_ig_prices.ipynb  02_import_csv_to_db.ipynb
   03_view_ig_prices.ipynb      04_backtest_strategy.ipynb
 tests/                    # pytest, offline (in-memory sqlite, synthetic frames)
@@ -28,8 +28,7 @@ data/                     # git-ignored: the CSV(s) + SQLite DB
 `import igmarket` works only once the package is installed (`pip install -e
 ".[dev]"` from the repo root). The notebooks' first cell does this
 automatically — it walks up from the kernel's working directory to the repo
-root and runs the editable install — so opening a notebook straight from
-`notebooks/` also works.
+root and runs the editable install.
 
 ## Running notebooks
 
@@ -37,12 +36,12 @@ Install once, then open in Jupyter or run headless:
 
 ```
 pip install -e ".[dev]"
-python -m jupyter nbconvert --to notebook --execute --inplace notebooks/01_download_ig_prices.ipynb
+python -m jupyter nbconvert --to notebook --execute --inplace 01_download_ig_prices.ipynb
 ```
 
 `igmarket.config` anchors `.env` and `data/` to the repo root via
-`Path(__file__)`, not the process CWD, so notebooks resolve the same files
-whether the kernel runs from the repo root or from `notebooks/`.
+`Path(__file__)`, not the process CWD, so the notebooks resolve the same
+files even if a kernel starts somewhere other than the repo root.
 
 `python -m pytest` runs the suite (no network, no `.env`, no DB — it uses
 in-memory SQLite and synthetic price frames).

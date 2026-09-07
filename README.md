@@ -1,6 +1,6 @@
 # igmarket
 
-A small library (`src/igmarket/`) plus Jupyter notebooks (`notebooks/`) for
+A small library (`src/igmarket/`) plus Jupyter notebooks (`0N_*.ipynb`) for
 pulling and inspecting IG Markets price history (currently the NASDAQ 100 index
 CFD, `IX.D.NASDAQ.IFA.IP`).
 
@@ -8,7 +8,7 @@ CFD, `IX.D.NASDAQ.IFA.IP`).
 
 ```
 src/igmarket/     library: config, ig_session, candle_csv, candle_db, backtest, constants/
-notebooks/        the runnable entry points, numbered in pipeline order
+0N_*.ipynb        the runnable entry points (repo root), numbered in pipeline order
 tests/            pytest suite (offline)
 doc/              IG REST API notes, epic list
 data/             git-ignored: downloaded CSV(s) + the SQLite DB
@@ -71,12 +71,11 @@ falling back to a default in `igmarket/config.py` (see `.env.sample`).
 Open in Jupyter, or run headless:
 
 ```
-python -m jupyter nbconvert --to notebook --execute --inplace notebooks/01_download_ig_prices.ipynb
+python -m jupyter nbconvert --to notebook --execute --inplace 01_download_ig_prices.ipynb
 ```
 
 `igmarket/config.py` anchors `.env` and `data/` to the repo root, so the
-notebooks find the same files whether the kernel starts in the repo root or in
-`notebooks/`.
+notebooks find the same files even if a kernel starts outside the repo root.
 
 - `01_download_ig_prices.ipynb` needs a valid `.env` and network access to IG.
   Set `IG_EPIC` / `IG_RESOLUTION` / `IG_DAYS_BACK` (and `IG_SAVE_CSV` /
