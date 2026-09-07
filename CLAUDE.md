@@ -25,10 +25,9 @@ data/                     # git-ignored: the CSV(s) + SQLite DB
 .env                      # git-ignored credentials + run config (see .env.sample)
 ```
 
-`import igmarket` works only once the package is installed (`pip install -e
-".[dev]"` from the repo root). The notebooks' first cell does this
-automatically — it walks up from the kernel's working directory to the repo
-root and runs the editable install.
+`import igmarket` works only once the package is installed: `pip install -e
+".[dev]"` from the repo root, once per environment, before running any
+notebook or test. The notebooks no longer self-install.
 
 ## Running notebooks
 

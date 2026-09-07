@@ -41,16 +41,22 @@ underlying cash index.
 
 ## Setup
 
-Install the package (editable) and the notebook toolchain from the repo root:
+The notebooks `import igmarket`, so install the package first — editable, with
+the notebook toolchain — from the repo root. A virtualenv is recommended:
 
 ```
+python -m venv .venv
+. .venv/bin/activate            # Windows: .venv\Scripts\activate
 pip install -e ".[dev]"
 ```
 
-The notebooks' first cell runs this for you (walking up to the repo root), so
-you can also just open a notebook and run it.
+Do this once per environment (re-run after changing `pyproject.toml`'s
+dependencies). `.[dev]` installs the runtime deps (`requests`,
+`python-dotenv`, `pandas`, `numpy`, `matplotlib`) plus `pytest`, `jupyter`,
+and `nbconvert`. Launch Jupyter from that same environment
+(`python -m jupyter lab`) so the kernel can see the package.
 
-Copy `.env.sample` to `.env` (git-ignored) and fill it in:
+Then copy `.env.sample` to `.env` (git-ignored) and fill it in:
 
 ```
 cp .env.sample .env
