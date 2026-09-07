@@ -25,12 +25,11 @@ python -m jupyter nbconvert --to notebook --execute --inplace <notebook>.ipynb
 to IG. `view_ig_prices.ipynb` only needs `data/ig_market_data.db` to exist.
 `import_csv_to_db.ipynb` loads one `data/ig_*.csv` (as written by the download
 notebook — the newest `data/ig_*.csv` by mtime unless `CSV_PATH` is set) into
-`data/ig_market_data.db` — no network; `epic`/`resolution`
-come from `config.py`, the rest from the CSV, and the raw-JSON `data` blob is
-reconstructed from the CSV's bid/ask columns via the producer's own
-`candle_csv.candle_to_row()` / `candle_db.INSERT_COLUMNS` (so `snapshotTime`
-and per-node `lastTraded` are absent/`null`, but rows are otherwise
-indistinguishable from downloaded ones). The CSV header must match
+`data/ig_market_data.db` — no network; `epic` comes from `config.py` and
+`resolution` (also from `config.py`) picks the target table, the rest from
+the CSV, flattened via the producer's own `candle_csv.candle_to_row()` /
+`candle_db.INSERT_COLUMNS` so rows are indistinguishable from downloaded
+ones. The CSV header must match
 `constants/csv_headers.py`'s `CSV_HEADERS` exactly or the import aborts.
 `INSERT OR IGNORE`, so re-running is a no-op.
 `backtest_strategy.ipynb` reads candles for one `epic`/`resolution` from
@@ -65,26 +64,29 @@ query. The `resolution` -> table-name mapping lives in `candle_db.py`
 `load_candles(conn, resolution, epic=None)` which the consumers use to read
 candles back), backed by `constants/resolutions.py`
 (`RESOLUTION_TABLE_SUFFIX`) — every notebook imports from there so the mapping
-can't drift out of sync. Columns of each `candles_<suffix>` table:
+can't drift out of sync. The `resolution` value itself is not stored as a
+column — it's fixed per table and recoverable from the table name, so
+consumers pass it in (`load_candles(conn, resolution, ...)`) rather than
+reading it back. Columns of each `candles_<suffix>` table:
 
 | column | notes |
 | --- | --- |
 | `epic` | e.g. `IX.D.NASDAQ.IFA.IP` (IG "US Tech 100 Cash") |
-| `resolution` | the IG `resolution` value this table holds (e.g. `DAY`); redundant with the table name itself, kept for convenience |
 | `snapshot_time_utc` | text, UTC, formatted ISO `YYYY-MM-DDTHH:MM:SS` — IG's `snapshotTimeUTC`, not the exchange-local `snapshotTime` |
 | `{open,high,low,close}_{bid,ask,mid}_price`, `last_traded_volume` | flattened price columns, matching the CSV output today — `constants/db_headers.py`'s `DB_HEADERS`, a copy of `constants/csv_headers.py`'s `CSV_HEADERS` kept as its own list so the two schemas can diverge independently; both are built via `candle_csv.candle_to_row()`, so keep `candle_to_row()`'s output order in sync with whichever headers list is in play if they ever do diverge |
-| `data` | raw IG candle JSON: `openPrice`/`closePrice`/`highPrice`/`lowPrice`, each `{bid, ask, lastTraded}`, plus `lastTradedVolume` — kept alongside the flattened columns for anything they don't capture |
 
 `UNIQUE(epic, snapshot_time_utc)` per table (resolution no longer needs to be
 part of the key — it's fixed per table). Both notebooks create tables via
 `candle_db.init_candles_table()` — keep it as the single source of truth for
-the schema. This column was renamed from `snapshot_time` (local time) to
-`snapshot_time_utc` (UTC), the table was later split from a single
-`candles` table (keyed on `epic, resolution, snapshot_time_utc`) into
-per-resolution `candles_<suffix>` tables, and the flattened price columns
-were added alongside the existing `data` blob — an existing local
-`data/ig_market_data.db` from before any of these changes needs deleting and
-re-downloading; `CREATE TABLE IF NOT EXISTS` will not migrate it.
+the schema. `snapshot_time_utc` was renamed from `snapshot_time` (local time)
+to UTC, the table was later split from a single `candles` table (keyed on
+`epic, resolution, snapshot_time_utc`) into per-resolution
+`candles_<suffix>` tables, the flattened price columns were added, and the
+redundant `resolution` column and the raw-JSON `data` blob were later dropped
+(the table name encodes the resolution; the flattened columns carry
+everything the notebooks read) — an existing local `data/ig_market_data.db`
+from before any of these changes needs deleting and re-downloading;
+`CREATE TABLE IF NOT EXISTS` will not migrate it.
 
 **`download_ig_prices.ipynb` (producer).** Downloads candles from the IG REST
 API and can write two outputs, each independently toggled: `data/ig_<epic-slug>_<resolution-suffix>_<timestamp>.csv`
@@ -101,7 +103,7 @@ bid/ask, not just mid — row-flattening lives in `candle_csv.py` (`candle_to_ro
 column headers in `constants/csv_headers.py` (`CSV_HEADERS`)) and an upsert into
 the `candles_<suffix>` table for `RESOLUTION` in `data/ig_market_data.db` via
 `INSERT OR IGNORE`. The `INSERT OR IGNORE` means existing rows are never
-updated — re-downloading a still-forming candle keeps the stale `data` blob
+updated — re-downloading a still-forming candle keeps the stale row already
 in the DB. `EPIC`, `RESOLUTION`, `DAYS_BACK` (lookback window in calendar
 days), and `SAVE_CSV`/`SAVE_DB` (whether to write each output) are read from
 `.env` (`IG_EPIC`, `IG_RESOLUTION`, `IG_DAYS_BACK`, `IG_SAVE_CSV`,

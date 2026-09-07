@@ -5,16 +5,17 @@ table naming (`table_name_for_resolution`), schema creation
 notebooks derive the same table name from a `resolution` value.
 
 Each table carries the flattened price columns from constants/db_headers.py
-(DB_HEADERS) alongside the raw JSON blob (`data`), so prices are directly
-queryable in SQL without duplicating the flattening logic in candle_csv.py."""
+(DB_HEADERS), so prices are directly queryable in SQL without duplicating the
+flattening logic in candle_csv.py."""
 
 from constants.db_headers import DB_HEADERS
 from constants.ohlc_fields import OHLCField
 from constants.resolutions import RESOLUTION_TABLE_SUFFIX
 
-# Columns for one INSERT, in order: epic/resolution, then DB_HEADERS' names
-# (which start with snapshot_time_utc), then the raw JSON blob.
-INSERT_COLUMNS = ["epic", "resolution", *(name for name, _ in DB_HEADERS), "data"]
+# Columns for one INSERT, in order: epic, then DB_HEADERS' names (which start
+# with snapshot_time_utc). The resolution isn't stored - it's fixed per table
+# and recoverable from the table name (see table_name_for_resolution).
+INSERT_COLUMNS = ["epic", *(name for name, _ in DB_HEADERS)]
 
 
 def table_name_for_resolution(resolution):
@@ -35,9 +36,7 @@ def init_candles_table(conn, resolution):
         f"""
         CREATE TABLE IF NOT EXISTS {table} (
             epic              TEXT NOT NULL,
-            resolution        TEXT NOT NULL,
             {price_columns},
-            data              TEXT NOT NULL,
             UNIQUE(epic, snapshot_time_utc)
         )
         """
@@ -52,11 +51,12 @@ def load_candles(connection, resolution, epic=None):
     init_candles_table / constants/db_headers.py) - no JSON parsing.
     `open`/`high`/`low`/`close` are the bid/ask mid; the same values are also
     exposed under their explicit `*_mid_price` names. Pass `epic` to filter to
-    a single instrument.
+    a single instrument. `resolution` is the caller's own argument (it picks
+    the table) - it isn't a stored column, so it isn't in the yielded dict.
     """
     table = table_name_for_resolution(resolution)
     sql = (
-        "SELECT epic, resolution, snapshot_time_utc, "
+        "SELECT epic, snapshot_time_utc, "
         "open_mid_price, high_mid_price, low_mid_price, close_mid_price, "
         "last_traded_volume "
         f"FROM {table}"
@@ -69,7 +69,6 @@ def load_candles(connection, resolution, epic=None):
 
     for (
         row_epic,
-        row_resolution,
         snapshot_time_utc,
         open_mid,
         high_mid,
@@ -79,7 +78,6 @@ def load_candles(connection, resolution, epic=None):
     ) in connection.execute(sql, params):
         yield {
             OHLCField.EPIC: row_epic,
-            OHLCField.RESOLUTION: row_resolution,
             OHLCField.SNAPSHOT_TIME_UTC: snapshot_time_utc,
             OHLCField.OPEN: open_mid,
             OHLCField.HIGH: high_mid,

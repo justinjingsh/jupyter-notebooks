@@ -15,15 +15,14 @@ Standalone Jupyter notebooks for pulling and inspecting IG Markets price history
 All four share `data/ig_market_data.db`, where each resolution gets its own
 table — `candles_1d` for `DAY`, `candles_10min` for `MINUTE_10`, etc. (the
 `resolution` -> table-name mapping is in `candle_db.py` /
-`constants/resolutions.py`):
+`constants/resolutions.py`). The resolution isn't stored as a column — the
+table name encodes it:
 
 | column | notes |
 | --- | --- |
 | `epic` | e.g. `IX.D.NASDAQ.IFA.IP` |
-| `resolution` | the IG resolution this table holds, e.g. `DAY` — redundant with the table name, kept for convenience |
 | `snapshot_time_utc` | text, UTC, `YYYY-MM-DDTHH:MM:SS` |
 | `{open,high,low,close}_{bid,ask,mid}_price`, `last_traded_volume` | flattened price columns, same as the CSV output — directly queryable in SQL |
-| `data` | raw IG candle JSON (`openPrice`/`closePrice`/`highPrice`/`lowPrice` as `{bid, ask, lastTraded}`, plus `lastTradedVolume`) |
 
 Prices are the bid/ask mid, `(bid + ask) / 2` — IG dealing prices, not the
 underlying cash index.
