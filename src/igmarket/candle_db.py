@@ -8,9 +8,9 @@ Each table carries the flattened price columns from constants/db_headers.py
 (DB_HEADERS), so prices are directly queryable in SQL without duplicating the
 flattening logic in candle_csv.py."""
 
-from constants.db_headers import DB_HEADERS
-from constants.ohlc_fields import OHLCField
-from constants.resolutions import RESOLUTION_TABLE_SUFFIX
+from igmarket.constants.db_headers import DB_HEADERS
+from igmarket.constants.ohlc_fields import OHLCField
+from igmarket.constants.resolutions import RESOLUTION_TABLE_SUFFIX
 
 # Columns for one INSERT, in order: epic, then DB_HEADERS' names (which start
 # with snapshot_time_utc). The resolution isn't stored - it's fixed per table

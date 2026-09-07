@@ -1,6 +1,10 @@
-"""Loads download_ig_prices.ipynb's credentials and settings from `.env`
+"""Loads the download notebook's credentials and settings from `.env`
 (see .env.sample) into a single Config object, so notebook cells pass around
-`cfg.epic` etc. instead of repeating `os.environ.get(...)` + parsing."""
+`cfg.epic` etc. instead of repeating `os.environ.get(...)` + parsing.
+
+Paths (`.env`, `data/`) are anchored to the repo root via this file's
+location, not the process CWD, so the notebooks resolve the same files
+whether the kernel runs from the repo root or from `notebooks/`."""
 
 import os
 from dataclasses import dataclass
@@ -9,8 +13,11 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-from constants.csv_filename_suffix import RESOLUTION_CSV_SUFFIX
-from constants.env_keys import EnvKey
+from igmarket.constants.csv_filename_suffix import RESOLUTION_CSV_SUFFIX
+from igmarket.constants.env_keys import EnvKey
+
+# src/igmarket/config.py -> repo root is three parents up.
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
 
 def _env_bool(value):
@@ -46,11 +53,12 @@ class Config:
     db_path: Path
 
     @classmethod
-    def from_env(cls, env_path=Path(".env")):
-        """Load `env_path` (git-ignored) and build a Config from it. Raises
-        FileNotFoundError if it doesn't exist, KeyError if a required IG
-        credential is missing."""
+    def from_env(cls, env_path=None):
+        """Load `env_path` (git-ignored, defaults to `<repo root>/.env`) and
+        build a Config from it. Raises FileNotFoundError if it doesn't exist,
+        KeyError if a required IG credential is missing."""
 
+        env_path = Path(env_path) if env_path is not None else PROJECT_ROOT / ".env"
         if not env_path.exists():
             raise FileNotFoundError(
                 f"{env_path.resolve()} not found - create it with IG_API_KEY / "
@@ -58,7 +66,7 @@ class Config:
             )
         load_dotenv(env_path, override=True)
 
-        data_dir = Path("data")
+        data_dir = PROJECT_ROOT / "data"
         data_dir.mkdir(exist_ok=True)
         run_timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
         epic = os.environ.get(EnvKey.IG_EPIC, "IX.D.NASDAQ.IFA.IP")

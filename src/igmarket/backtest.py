@@ -29,7 +29,7 @@ from dataclasses import dataclass
 import numpy as np
 import pandas as pd
 
-from constants.ohlc_fields import OHLCField
+from igmarket.constants.ohlc_fields import OHLCField
 
 _TRADE_COLUMNS = [
     "entry_time",
