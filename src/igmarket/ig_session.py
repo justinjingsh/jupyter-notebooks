@@ -1,4 +1,4 @@
-"""IGSession: just enough of the IG REST API for download_ig_prices.ipynb -
+"""IGSession: just enough of the IG REST API for 01_download_prices.ipynb -
 POST /session to authenticate, then GET /prices/{epic} (Version: 3) with
 resolution/from/to/pageSize/pageNumber to page through history. Mirrors the
 IGSession class in

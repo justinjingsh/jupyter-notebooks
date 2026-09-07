@@ -18,13 +18,14 @@ data/             git-ignored: downloaded CSV(s) + the SQLite DB
 
 | Notebook | Role |
 | --- | --- |
-| `01_download_ig_prices.ipynb` | Downloads candles from the IG REST API into a timestamped `data/ig_<epic-slug>_<resolution-suffix>_<timestamp>.csv` and/or `data/ig_market_data.db`. |
+| `01_download_prices.ipynb` | Downloads candles from the IG REST API into a timestamped `data/ig_<epic-slug>_<resolution-suffix>_<timestamp>.csv` (load it into the DB with `02_import_csv_to_db.ipynb`). |
 | `02_import_csv_to_db.ipynb` | Loads one `data/ig_*.csv` written by the download notebook into `data/ig_market_data.db` (offline; `INSERT OR IGNORE`, so re-running is a no-op). |
 | `03_view_ig_prices.ipynb` | Reads `data/ig_market_data.db`, flattens candles to OHLC, and draws a candlestick chart with a volume panel. |
 | `04_backtest_strategy.ipynb` | Backtests a long/flat strategy over a chosen window of the `data/ig_market_data.db` history (fixed-size CFD model, engine in `igmarket/backtest.py`); shows a metrics summary, trade list, price / funding / drawdown charts, and a multi-strategy comparison table. |
 
-All four share `data/ig_market_data.db`, where each resolution gets its own
-table — `candles_1d` for `DAY`, `candles_10min` for `MINUTE_10`, etc. (the
+`02`–`04` share `data/ig_market_data.db` (`01` only writes the CSV), where
+each resolution gets its own table — `candles_1d` for `DAY`, `candles_10min`
+for `MINUTE_10`, etc. (the
 `resolution` -> table-name mapping is in `igmarket/candle_db.py` /
 `igmarket/constants/resolutions.py`). The resolution isn't stored as a column —
 the table name encodes it:
@@ -63,26 +64,27 @@ IG_ACCOUNT_TYPE=demo   # or "live" — completely separate credentials and data
 ```
 
 `.env` also carries optional settings (each with a default in
-`igmarket/config.py`, see `.env.sample`): `IG_EPIC`, `IG_SAVE_CSV`,
-`IG_SAVE_DB`, and `IG_RESOLUTION`. `01_download_ig_prices.ipynb` sets its own
-`START` / `END` / `RESOLUTION` in the notebook and ignores `IG_RESOLUTION` /
-`IG_DAYS_BACK`; the other notebooks still read `IG_RESOLUTION`.
+`igmarket/config.py`, see `.env.sample`): `IG_EPIC`, `IG_SAVE_CSV`, and
+`IG_RESOLUTION`. `01_download_prices.ipynb` sets its own `START` / `END` /
+`RESOLUTION` in the notebook and ignores `IG_RESOLUTION` / `IG_DAYS_BACK` /
+`IG_SAVE_DB`; the other notebooks still read `IG_RESOLUTION`.
 
 ## Running
 
 Open in Jupyter, or run headless:
 
 ```
-python -m jupyter nbconvert --to notebook --execute --inplace 01_download_ig_prices.ipynb
+python -m jupyter nbconvert --to notebook --execute --inplace 01_download_prices.ipynb
 ```
 
 `igmarket/config.py` anchors `.env` and `data/` to the repo root, so the
 notebooks find the same files even if a kernel starts outside the repo root.
 
-- `01_download_ig_prices.ipynb` needs a valid `.env` and network access to IG.
+- `01_download_prices.ipynb` needs a valid `.env` and network access to IG.
   Set the window and resolution in the section-1 cell (`START`, `END`,
-  `RESOLUTION`); `IG_EPIC` / `IG_SAVE_CSV` / `IG_SAVE_DB` still come from
-  `.env` (defaults in `igmarket/config.py`).
+  `RESOLUTION`); `IG_EPIC` / `IG_SAVE_CSV` still come from `.env` (defaults in
+  `igmarket/config.py`). It writes only the CSV — load it into the DB with
+  `02_import_csv_to_db.ipynb`.
 - `03_view_ig_prices.ipynb` only needs `data/ig_market_data.db` to exist.
 - `02_import_csv_to_db.ipynb` needs a `data/ig_*.csv` to import and a `.env`
   (for `igmarket.config`); it imports the newest such CSV by default.

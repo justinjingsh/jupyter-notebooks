@@ -1,5 +1,5 @@
 """CSV column headers for the flattened IG candle rows written by
-download_ig_prices.ipynb (see candle_csv.candle_to_row)."""
+01_download_prices.ipynb (see candle_csv.candle_to_row)."""
 
 CSV_HEADERS = [
     "snapshot_time_utc",

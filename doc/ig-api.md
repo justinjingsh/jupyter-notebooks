@@ -1,6 +1,6 @@
 # IG REST API — as used by these notebooks
 
-Scope: what `download_ig_prices.ipynb` actually calls — `POST /session` to
+Scope: what `01_download_prices.ipynb` actually calls — `POST /session` to
 authenticate, then paginated `GET /prices/{epic}` for historical candles. The
 `IGSession` class in that notebook is the reference implementation; this file
 describes the wire contract it depends on.

@@ -1,5 +1,5 @@
 """The per-resolution `candles_<suffix>` SQLite tables shared between
-download_ig_prices.ipynb (producer) and view_ig_prices.ipynb (consumer):
+01_download_prices.ipynb (producer) and view_ig_prices.ipynb (consumer):
 table naming (`table_name_for_resolution`), schema creation
 (`init_candles_table`), and reading candles back (`load_candles`), so both
 notebooks derive the same table name from a `resolution` value.

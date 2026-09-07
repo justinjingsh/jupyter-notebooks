@@ -219,7 +219,7 @@ __marimo__/
 
 # --- Project -------------------------------------------------------------------
 # Downloaded / generated price data and local SQLite DBs. Regenerate from the
-# IG API with download_ig_prices.ipynb; not tracked because they're large and
+# IG API with 01_download_prices.ipynb; not tracked because they're large and
 # reproducible.
 /data/
 *.db
