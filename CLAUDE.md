@@ -131,12 +131,16 @@ bid/ask, not just mid — row-flattening lives in `igmarket/candle_csv.py`
 (`CSV_HEADERS`)) and an upsert into the `candles_<suffix>` table for
 `RESOLUTION` in `data/ig_market_data.db` via `INSERT OR IGNORE`. The
 `INSERT OR IGNORE` means existing rows are never updated — re-downloading a
-still-forming candle keeps the stale row already in the DB. `EPIC`,
-`RESOLUTION`, `DAYS_BACK` (lookback window in calendar days), and
-`SAVE_CSV`/`SAVE_DB` (whether to write each output) are read from `.env`
-(`IG_EPIC`, `IG_RESOLUTION`, `IG_DAYS_BACK`, `IG_SAVE_CSV`, `IG_SAVE_DB`), each
-with a default in `igmarket/config.py` so `.env` doesn't have to set them;
-`CSV_PATH`/`DB_PATH` are derived in the config cell.
+still-forming candle keeps the stale row already in the DB. The **download
+window and resolution are notebook variables**, set in the section-1 cell:
+`START` / `END` (UTC, `"YYYY-MM-DD"` or `"YYYY-MM-DDTHH:MM:SS"`; `END = None`
+means now) and `RESOLUTION`. `EPIC` and the `SAVE_CSV`/`SAVE_DB` toggles are
+still read from `.env` (`IG_EPIC`, `IG_SAVE_CSV`, `IG_SAVE_DB`) via
+`Config.from_env()`, each with a default in `igmarket/config.py`;
+`IG_RESOLUTION` / `IG_DAYS_BACK` are ignored by this notebook (the other
+notebooks still use `IG_RESOLUTION`). `DB_PATH` is `cfg.db_path`; `CSV_PATH`
+comes from `cfg.csv_path_for(RESOLUTION)` — a fresh timestamped path named for
+the notebook's chosen resolution.
 
 **`03_view_ig_prices.ipynb` (consumer).** Reads a `candles_<suffix>` table with
 stdlib `sqlite3` via `candle_db.load_candles(conn, resolution, epic=None)`
@@ -199,6 +203,8 @@ IG_PASSWORD=...
 IG_ACCOUNT_TYPE=demo
 ```
 
-`.env` also carries `01_download_ig_prices.ipynb`'s config — `IG_EPIC`,
-`IG_RESOLUTION`, `IG_DAYS_BACK`, `IG_SAVE_CSV`, `IG_SAVE_DB` — each optional,
-falling back to a default in `igmarket/config.py` if unset.
+`.env` also carries optional settings, each falling back to a default in
+`igmarket/config.py`: `IG_EPIC`, `IG_SAVE_CSV`, `IG_SAVE_DB` (used by
+`01_download_ig_prices.ipynb`) and `IG_RESOLUTION` (used by the other three
+notebooks — `01` sets `RESOLUTION` in-notebook instead). `IG_DAYS_BACK` is
+still parsed into `cfg.days_back` but no notebook reads it any more.

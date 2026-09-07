@@ -91,3 +91,17 @@ class Config:
             ),
             db_path=data_dir / "ig_market_data.db",
         )
+
+    def csv_path_for(self, resolution, epic=None):
+        """A fresh, timestamped CSV path for `resolution` (and `epic`,
+        defaulting to `self.epic`) under this config's `data_dir` — same
+        naming scheme as the `.env`-derived `csv_path`, but for a resolution
+        chosen at call time rather than from `IG_RESOLUTION`."""
+
+        epic = epic or self.epic
+        run_timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+        return self.data_dir / (
+            f"ig_{_epic_slug(epic)}_"
+            f"{RESOLUTION_CSV_SUFFIX.get(resolution, resolution.lower())}_"
+            f"{run_timestamp}.csv"
+        )

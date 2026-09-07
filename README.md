@@ -62,9 +62,11 @@ IG_PASSWORD=...
 IG_ACCOUNT_TYPE=demo   # or "live" — completely separate credentials and data
 ```
 
-`.env` also carries `01_download_ig_prices.ipynb`'s run config — `IG_EPIC`,
-`IG_RESOLUTION`, `IG_DAYS_BACK`, `IG_SAVE_CSV`, `IG_SAVE_DB` — each optional,
-falling back to a default in `igmarket/config.py` (see `.env.sample`).
+`.env` also carries optional settings (each with a default in
+`igmarket/config.py`, see `.env.sample`): `IG_EPIC`, `IG_SAVE_CSV`,
+`IG_SAVE_DB`, and `IG_RESOLUTION`. `01_download_ig_prices.ipynb` sets its own
+`START` / `END` / `RESOLUTION` in the notebook and ignores `IG_RESOLUTION` /
+`IG_DAYS_BACK`; the other notebooks still read `IG_RESOLUTION`.
 
 ## Running
 
@@ -78,9 +80,9 @@ python -m jupyter nbconvert --to notebook --execute --inplace 01_download_ig_pri
 notebooks find the same files even if a kernel starts outside the repo root.
 
 - `01_download_ig_prices.ipynb` needs a valid `.env` and network access to IG.
-  Set `IG_EPIC` / `IG_RESOLUTION` / `IG_DAYS_BACK` (and `IG_SAVE_CSV` /
-  `IG_SAVE_DB`) in `.env` to change what it pulls; unset, they fall back to the
-  defaults in `igmarket/config.py` (`IG_DAYS_BACK` defaults to `1`).
+  Set the window and resolution in the section-1 cell (`START`, `END`,
+  `RESOLUTION`); `IG_EPIC` / `IG_SAVE_CSV` / `IG_SAVE_DB` still come from
+  `.env` (defaults in `igmarket/config.py`).
 - `03_view_ig_prices.ipynb` only needs `data/ig_market_data.db` to exist.
 - `02_import_csv_to_db.ipynb` needs a `data/ig_*.csv` to import and a `.env`
   (for `igmarket.config`); it imports the newest such CSV by default.
