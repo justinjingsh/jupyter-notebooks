@@ -25,24 +25,27 @@ data/                     # git-ignored: the CSV(s) + SQLite DB
 .env                      # git-ignored credentials + run config (see .env.sample)
 ```
 
-`import igmarket` works only once the package is installed: `pip install -e
-".[dev]"` from the repo root, once per environment, before running any
-notebook or test. The notebooks no longer self-install.
+`import igmarket` works only once the package is installed: `uv sync --extra
+dev` from the repo root (or `pip install -e ".[dev]"` into a venv), once per
+environment, before running any notebook or test. The notebooks no longer
+self-install.
 
 ## Running notebooks
 
-Install once, then open in Jupyter or run headless:
+The project uses [uv](https://docs.astral.sh/uv/); `uv run` executes in
+`.venv`:
 
 ```
-pip install -e ".[dev]"
-python -m jupyter nbconvert --to notebook --execute --inplace 01_download_prices.ipynb
+uv sync --extra dev
+uv run jupyter lab                                                                    # interactive
+uv run jupyter nbconvert --to notebook --execute --inplace 01_download_prices.ipynb   # headless
 ```
 
 `igmarket.config` anchors `.env` and `data/` to the repo root via
 `Path(__file__)`, not the process CWD, so the notebooks resolve the same
 files even if a kernel starts somewhere other than the repo root.
 
-`python -m pytest` runs the suite (no network, no `.env`, no DB — it uses
+`uv run pytest` runs the suite (no network, no `.env`, no DB — it uses
 in-memory SQLite and synthetic price frames).
 
 `01_download_prices.ipynb` needs a valid `.env` (see below) and network
@@ -71,8 +74,9 @@ also shows the trade list, charts price / funding curve / drawdown, and runs a
 small `BuyHold` + `SmaCrossover` parameter sweep into a comparison table.
 
 Runtime dependencies (`requests`, `python-dotenv`, `pandas`, `numpy`,
-`matplotlib`) are declared in `pyproject.toml`; `pip install -e ".[dev]"` adds
-`pytest`, `jupyter`, and `nbconvert`. The viz cells still guard their
+`matplotlib`) are declared in `pyproject.toml`; the `dev` extra (`uv sync
+--extra dev`) adds `pytest`, `jupyter`, and `nbconvert`. `uv.lock` pins the
+full set. The viz cells still guard their
 `pandas` / `matplotlib` imports with a `%pip install` hint so a bare kernel
 degrades gracefully.
 
@@ -131,15 +135,18 @@ bid/ask, not just mid — row-flattening lives in `igmarket/candle_csv.py`
 (`CSV_HEADERS`)). It does **not** touch the DB — run
 `02_import_csv_to_db.ipynb` to load the CSV into `data/ig_market_data.db`
 (`INSERT OR IGNORE`, so re-running is a no-op). The **download window and
-resolution are notebook variables**, set in the section-1 cell: `START` /
-`END` (UTC, `"YYYY-MM-DD"` or `"YYYY-MM-DDTHH:MM:SS"`; a bare-date `END` is
-rolled to `23:59:59` that day; `END = None` means now) and `RESOLUTION`.
-`EPIC` and the `SAVE_CSV` toggle are read from `.env` (`IG_EPIC`,
-`IG_SAVE_CSV`) via `Config.from_env()`, each with a default in
-`igmarket/config.py`; `IG_RESOLUTION` / `IG_DAYS_BACK` / `IG_SAVE_DB` are
-ignored by this notebook (the other notebooks still use `IG_RESOLUTION`).
-`CSV_PATH` comes from `cfg.csv_path_for(RESOLUTION)` — a fresh timestamped
-path named for the notebook's chosen resolution.
+resolution are read from `.env`** via `Config.from_env()`: `IG_START` /
+`IG_END` (UTC, `"YYYY-MM-DD"` or `"YYYY-MM-DDTHH:MM:SS"`; a bare-date
+`IG_END` is rolled to `23:59:59` that day; a blank `IG_END` means now —
+`IG_START` is required, raising `KeyError` if unset) and `IG_RESOLUTION`
+(shared with `02`/`03`/`04`, default `DAY`). `EPIC` and the `SAVE_CSV` toggle
+are likewise read from `.env` (`IG_EPIC`, `IG_SAVE_CSV`), each with a default
+in `igmarket/config.py`; `IG_DAYS_BACK` / `IG_SAVE_DB` are still parsed but
+unused. `CSV_PATH` comes from `cfg.csv_path_for(RESOLUTION)` — a fresh
+timestamped path named for the resolution. Because the window lives in
+`.env` rather than the notebook, a forgotten edit there silently re-downloads
+the same window and spends historical-data allowance — the config cell
+prints what it loaded so this is visible before the API call runs.
 
 **`03_view_ig_prices.ipynb` (consumer).** Reads a `candles_<suffix>` table with
 stdlib `sqlite3` via `candle_db.load_candles(conn, resolution, epic=None)`
@@ -176,6 +183,9 @@ behaviour).
   demo/retail keys. `metadata.allowance` reports what's left (field names in
   `igmarket/constants/allowance_fields.py`'s `AllowanceField`); exceeding it
   returns `403 error.public-api.exceeded-account-historical-data-allowance`.
+  `IGSession.get_allowance(epic, resolution)` checks it cheaply (`max=1`, one
+  candle) before a real download — `01_download_prices.ipynb` calls it and
+  logs the result before calling `get_prices()`.
 - **Epics:** `doc/epics.md` lists common epic IDs and their instrument names, plus
   the `GET /markets?searchTerm=` (`Version: 1`) call to resolve others. Epics vary
   by environment (demo/live) and account, so verify before hard-coding.
@@ -203,8 +213,9 @@ IG_ACCOUNT_TYPE=demo
 ```
 
 `.env` also carries optional settings, each falling back to a default in
-`igmarket/config.py`: `IG_EPIC` and `IG_SAVE_CSV` (used by
-`01_download_prices.ipynb`) and `IG_RESOLUTION` (used by the other three
-notebooks — `01` sets `RESOLUTION` in-notebook instead). `IG_DAYS_BACK` and
-`IG_SAVE_DB` are still parsed (`cfg.days_back`, `cfg.save_db`) but no notebook
-reads them any more.
+`igmarket/config.py`: `IG_EPIC`, `IG_SAVE_CSV`, and `IG_RESOLUTION` (used by
+all four notebooks). `IG_START` (required, no default — `01_download_prices.ipynb`'s
+download window start) and `IG_END` (optional, blank means now) have no
+`.env.sample` default beyond a placeholder, since they're expected to change
+per run. `IG_DAYS_BACK` and `IG_SAVE_DB` are still parsed (`cfg.days_back`,
+`cfg.save_db`) but no notebook reads them.

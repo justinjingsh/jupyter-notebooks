@@ -10,7 +10,7 @@ def _cfg(tmp_path):
     return Config(
         env_path=tmp_path / ".env",
         api_key="k", username="u", password="p", account_type="demo",
-        epic="IX.D.NASDAQ.IFA.IP", resolution="DAY", days_back=1,
+        epic="IX.D.NASDAQ.IFA.IP", resolution="DAY", start="2024-01-01", end=None, days_back=1,
         save_csv=True, save_db=False,
         data_dir=tmp_path / "data", csv_path=tmp_path / "x.csv",
         db_path=tmp_path / "data" / "ig_market_data.db",

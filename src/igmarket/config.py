@@ -44,6 +44,8 @@ class Config:
 
     epic: str
     resolution: str
+    start: str
+    end: str | None
     days_back: int
     save_csv: bool
     save_db: bool
@@ -56,7 +58,7 @@ class Config:
     def from_env(cls, env_path=None):
         """Load `env_path` (git-ignored, defaults to `<repo root>/.env`) and
         build a Config from it. Raises FileNotFoundError if it doesn't exist,
-        KeyError if a required IG credential is missing."""
+        KeyError if a required IG credential or `IG_START` is missing."""
 
         env_path = Path(env_path) if env_path is not None else PROJECT_ROOT / ".env"
         if not env_path.exists():
@@ -80,6 +82,8 @@ class Config:
             account_type=os.environ.get(EnvKey.IG_ACCOUNT_TYPE, "demo").lower(),
             epic=epic,
             resolution=resolution,
+            start=os.environ[EnvKey.IG_START],
+            end=os.environ.get(EnvKey.IG_END) or None,
             days_back=int(os.environ.get(EnvKey.IG_DAYS_BACK, "1")),
             save_csv=_env_bool(os.environ.get(EnvKey.IG_SAVE_CSV, "true")),
             save_db=_env_bool(os.environ.get(EnvKey.IG_SAVE_DB, "false")),

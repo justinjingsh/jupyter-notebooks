@@ -41,20 +41,21 @@ underlying cash index.
 
 ## Setup
 
-The notebooks `import igmarket`, so install the package first — editable, with
-the notebook toolchain — from the repo root. A virtualenv is recommended:
+Uses [uv](https://docs.astral.sh/uv/). From the repo root:
 
 ```
-python -m venv .venv
-. .venv/bin/activate            # Windows: .venv\Scripts\activate
-pip install -e ".[dev]"
+uv sync --extra dev
 ```
 
-Do this once per environment (re-run after changing `pyproject.toml`'s
-dependencies). `.[dev]` installs the runtime deps (`requests`,
-`python-dotenv`, `pandas`, `numpy`, `matplotlib`) plus `pytest`, `jupyter`,
-and `nbconvert`. Launch Jupyter from that same environment
-(`python -m jupyter lab`) so the kernel can see the package.
+That creates `.venv/`, installs the pinned deps from `uv.lock` — runtime
+(`requests`, `python-dotenv`, `pandas`, `numpy`, `matplotlib`) plus the `dev`
+extra (`pytest`, `jupyter`, `nbconvert`) — and the `igmarket` package itself,
+editable. Re-run it after changing dependencies (`uv add …` or editing
+`pyproject.toml`). Commands below use `uv run`, which executes in that
+environment — no manual `activate` needed.
+
+> No uv? `python -m venv .venv && . .venv/bin/activate && pip install -e ".[dev]"`,
+> then drop the `uv run` prefix from every command below.
 
 Then copy `.env.sample` to `.env` (git-ignored) and fill it in:
 
@@ -77,14 +78,16 @@ IG_ACCOUNT_TYPE=demo   # or "live" — completely separate credentials and data
 
 ## Running
 
-Open in Jupyter, or run headless:
-
 ```
-python -m jupyter nbconvert --to notebook --execute --inplace 01_download_prices.ipynb
+uv sync --extra dev                                                                   # once per environment
+uv run jupyter lab                                                                    # interactive
+uv run jupyter nbconvert --to notebook --execute --inplace 01_download_prices.ipynb   # headless
 ```
 
-`igmarket/config.py` anchors `.env` and `data/` to the repo root, so the
-notebooks find the same files even if a kernel starts outside the repo root.
+`uv run` executes in the project venv, so the notebook kernel (the default
+**Python 3 (ipykernel)**) can `import igmarket`. `igmarket/config.py` anchors
+`.env` and `data/` to the repo root, so the notebooks find the same files
+even if a kernel starts outside the repo root.
 
 - `01_download_prices.ipynb` needs a valid `.env` and network access to IG.
   Set the window and resolution in the section-1 cell (`START`, `END`,
@@ -100,7 +103,7 @@ notebooks find the same files even if a kernel starts outside the repo root.
 ## Tests
 
 ```
-python -m pytest
+uv run pytest
 ```
 
 Offline — in-memory SQLite and synthetic price frames, no `.env` or network.

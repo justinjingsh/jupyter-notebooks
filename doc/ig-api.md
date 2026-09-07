@@ -92,8 +92,11 @@ notebook makes.
 | `pageSize` | `200` | Candles per page |
 | `pageNumber` | `1`, `2`, ... | 1-based page cursor |
 
-> IG also accepts `max=<n>` (most-recent N candles) instead of `from`/`to`. The
-> notebook uses the explicit range so re-runs cover a deterministic window.
+> IG also accepts `max=<n>` (most-recent N candles) instead of `from`/`to`.
+> `IGSession.get_prices()` doesn't use it — the notebook wants an explicit
+> range so re-runs cover a deterministic window — but `IGSession.get_allowance()`
+> does: a `max=1` request is the cheapest way to read `metadata.allowance`
+> without spending it on a real download.
 
 ### Pagination
 
