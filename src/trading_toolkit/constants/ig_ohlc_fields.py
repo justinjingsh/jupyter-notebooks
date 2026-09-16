@@ -7,7 +7,6 @@ indexes those columns can't drift apart."""
 class OHLCField:
     """Keys of one flat OHLC candle dict from `candle_db.load_candles`."""
     EPIC = "epic"
-    RESOLUTION = "resolution"
     SNAPSHOT_TIME_UTC = "snapshot_time_utc"
     OPEN = "open"
     HIGH = "high"

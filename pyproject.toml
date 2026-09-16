@@ -1,0 +1,38 @@
+[project]
+name = "trading_toolkit"
+version = "0.1.0"
+description = "Download, store, visualize, and backtest price history from IG Markets and Yahoo Finance."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "requests",
+    "python-dotenv",
+    "pandas",
+    "numpy",
+    "matplotlib",
+    "yfinance",
+    "psycopg2-binary",
+    "ig-quant-trading",  # the strategies - see [tool.uv.sources]
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "jupyter",
+    "nbconvert",
+]
+
+[tool.uv.sources]
+# the sibling repo that trades the strategies live; editable, so a strategy
+# edited there is what the notebooks backtest - no copying
+ig-quant-trading = { path = "../ig-quant-trading", editable = true }
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/trading_toolkit"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

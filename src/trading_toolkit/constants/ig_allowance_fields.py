@@ -1,5 +1,5 @@
 """Raw IG `metadata.allowance` JSON field names, as returned by
-GET /prices/{epic} (see doc/ig-api.md)."""
+GET /prices/{epic} (see doc/ig/ig-api.md)."""
 
 
 class AllowanceField:
