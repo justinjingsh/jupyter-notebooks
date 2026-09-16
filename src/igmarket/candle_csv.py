@@ -1,8 +1,8 @@
-"""Flattens raw IG candle dicts into CSV rows for download_ig_prices.ipynb.
-Column headers live in constants/csv_headers.py (CSV_HEADERS); row-building
-here must match that column order."""
+"""Flattens raw IG candle dicts into CSV rows for the download notebook.
+Column headers live in igmarket/constants/csv_headers.py (CSV_HEADERS);
+row-building here must match that column order."""
 
-from constants.ig_candle_fields import CandleField, PriceField
+from igmarket.constants.ig_candle_fields import CandleField, PriceField
 
 
 def mid(node):

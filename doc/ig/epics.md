@@ -2,7 +2,7 @@
 
 An **epic** is IG's identifier for one tradeable market, e.g. `IX.D.NASDAQ.IFA.IP`
 ("US Tech 100 Cash"). It is what you pass to `GET /prices/{epic}` and set as
-`EPIC` in `download_ig_prices.ipynb`.
+`EPIC` in `01_download_prices.ipynb`.
 
 > **Epics are not a fixed public list.** The same underlying market has several
 > epics (dated vs undated, CFD vs spread bet vs share dealing, full vs mini,
@@ -17,7 +17,7 @@ These are used by the notebooks here or listed in the sibling
 
 | Epic | Instrument | Notes |
 | --- | --- | --- |
-| `IX.D.NASDAQ.IFA.IP` | US Tech 100 Cash (NASDAQ 100) | Default `EPIC` in `download_ig_prices.ipynb` |
+| `IX.D.NASDAQ.IFA.IP` | US Tech 100 Cash (NASDAQ 100) | Default `EPIC` in `01_download_prices.ipynb` |
 | `IX.D.DAX.IFA.IP` | Germany 40 Cash (DAX) | |
 | `IX.D.NIKKEI.IFA.IP` | Japan 225 Cash (Nikkei 225) | |
 | `IX.D.ASX.IFT.IP` | Australia 200 Cash (ASX 200) | A$5 / point |
@@ -106,7 +106,7 @@ IX .  D  . NASDAQ  . IFA    . IP
 Use IG's free-text market search — `GET /markets?searchTerm=<term>` with
 `Version: 1`. It returns `{ "markets": [ { epic, instrumentName, expiry, ... } ] }`.
 
-Reusing `IGSession` from `download_ig_prices.ipynb`:
+Reusing `IGSession` from `01_download_prices.ipynb`:
 
 ```python
 ig = IGSession(API_KEY, USERNAME, PASSWORD, ACCOUNT_TYPE)

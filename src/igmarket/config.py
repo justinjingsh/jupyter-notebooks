@@ -1,6 +1,10 @@
-"""Loads download_ig_prices.ipynb's credentials and settings from `.env`
+"""Loads the download notebook's credentials and settings from `.env`
 (see .env.sample) into a single Config object, so notebook cells pass around
-`cfg.epic` etc. instead of repeating `os.environ.get(...)` + parsing."""
+`cfg.epic` etc. instead of repeating `os.environ.get(...)` + parsing.
+
+Paths (`.env`, `data/`) are anchored to the repo root via this file's
+location, not the process CWD, so the notebooks resolve the same files even
+if a kernel starts somewhere other than the repo root."""
 
 import os
 from dataclasses import dataclass
@@ -9,8 +13,11 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-from constants.csv_filename_suffix import RESOLUTION_CSV_SUFFIX
-from constants.env_keys import EnvKey
+from igmarket.constants.csv_filename_suffix import RESOLUTION_CSV_SUFFIX
+from igmarket.constants.env_keys import EnvKey
+
+# src/igmarket/config.py -> repo root is three parents up.
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
 
 def _env_bool(value):
@@ -37,6 +44,8 @@ class Config:
 
     epic: str
     resolution: str
+    start: str
+    end: str | None
     days_back: int
     save_csv: bool
     save_db: bool
@@ -46,11 +55,12 @@ class Config:
     db_path: Path
 
     @classmethod
-    def from_env(cls, env_path=Path(".env")):
-        """Load `env_path` (git-ignored) and build a Config from it. Raises
-        FileNotFoundError if it doesn't exist, KeyError if a required IG
-        credential is missing."""
+    def from_env(cls, env_path=None):
+        """Load `env_path` (git-ignored, defaults to `<repo root>/.env`) and
+        build a Config from it. Raises FileNotFoundError if it doesn't exist,
+        KeyError if a required IG credential or `IG_START` is missing."""
 
+        env_path = Path(env_path) if env_path is not None else PROJECT_ROOT / ".env"
         if not env_path.exists():
             raise FileNotFoundError(
                 f"{env_path.resolve()} not found - create it with IG_API_KEY / "
@@ -58,7 +68,7 @@ class Config:
             )
         load_dotenv(env_path, override=True)
 
-        data_dir = Path("data")
+        data_dir = PROJECT_ROOT / "data"
         data_dir.mkdir(exist_ok=True)
         run_timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
         epic = os.environ.get(EnvKey.IG_EPIC, "IX.D.NASDAQ.IFA.IP")
@@ -72,6 +82,8 @@ class Config:
             account_type=os.environ.get(EnvKey.IG_ACCOUNT_TYPE, "demo").lower(),
             epic=epic,
             resolution=resolution,
+            start=os.environ[EnvKey.IG_START],
+            end=os.environ.get(EnvKey.IG_END) or None,
             days_back=int(os.environ.get(EnvKey.IG_DAYS_BACK, "1")),
             save_csv=_env_bool(os.environ.get(EnvKey.IG_SAVE_CSV, "true")),
             save_db=_env_bool(os.environ.get(EnvKey.IG_SAVE_DB, "false")),
@@ -82,4 +94,18 @@ class Config:
                 f"{run_timestamp}.csv"
             ),
             db_path=data_dir / "ig_market_data.db",
+        )
+
+    def csv_path_for(self, resolution, epic=None):
+        """A fresh, timestamped CSV path for `resolution` (and `epic`,
+        defaulting to `self.epic`) under this config's `data_dir` — same
+        naming scheme as the `.env`-derived `csv_path`, but for a resolution
+        chosen at call time rather than from `IG_RESOLUTION`."""
+
+        epic = epic or self.epic
+        run_timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+        return self.data_dir / (
+            f"ig_{_epic_slug(epic)}_"
+            f"{RESOLUTION_CSV_SUFFIX.get(resolution, resolution.lower())}_"
+            f"{run_timestamp}.csv"
         )

@@ -1,4 +1,4 @@
-"""Maps IG `resolution` values (GET /prices/{epic}, see doc/ig-api.md) to the
+"""Maps IG `resolution` values (GET /prices/{epic}, see doc/ig/ig-api.md) to the
 suffix used in the timestamped download CSV filename (see config.py's
 Config.csv_path). Separate from constants/resolutions.py's
 RESOLUTION_TABLE_SUFFIX, which names DB tables and favours compact suffixes

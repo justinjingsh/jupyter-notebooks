@@ -1,9 +1,10 @@
 # IG REST API — as used by these notebooks
 
-Scope: what `download_ig_prices.ipynb` actually calls — `POST /session` to
+Scope: what `01_download_prices.ipynb` actually calls — `POST /session` to
 authenticate, then paginated `GET /prices/{epic}` for historical candles. The
-`IGSession` class in that notebook is the reference implementation; this file
-describes the wire contract it depends on.
+`IGSession` class (`igmarket/ig_session.py`, imported by that notebook) is
+the reference implementation; this file describes the wire contract it
+depends on.
 
 Official reference: <https://labs.ig.com/rest-trading-api-reference>
 
@@ -92,8 +93,11 @@ notebook makes.
 | `pageSize` | `200` | Candles per page |
 | `pageNumber` | `1`, `2`, ... | 1-based page cursor |
 
-> IG also accepts `max=<n>` (most-recent N candles) instead of `from`/`to`. The
-> notebook uses the explicit range so re-runs cover a deterministic window.
+> IG also accepts `max=<n>` (most-recent N candles) instead of `from`/`to`.
+> `IGSession.get_prices()` doesn't use it — the notebook wants an explicit
+> range so re-runs cover a deterministic window — but `IGSession.get_allowance()`
+> does: a `max=1` request is the cheapest way to read `metadata.allowance`
+> without spending it on a real download.
 
 ### Pagination
 
@@ -133,10 +137,13 @@ per-minute request allowance.
 }
 ```
 
-Both notebooks reduce each OHLC node to its **mid price**, `(bid + ask) / 2`
-(`mid()`). A node missing `bid` or `ask` yields `None`. `snapshotTimeUTC` (not
-the exchange-local `snapshotTime`) is the key stored in `candles.snapshot_time_utc`;
-the whole object is stored verbatim in `candles.data`.
+`01_download_prices.ipynb` flattens each candle via `candle_csv.candle_to_row()`:
+every OHLC node becomes three columns — its raw `bid`, raw `ask`, and the
+**mid price**, `(bid + ask) / 2` (`mid()`) — a node missing `bid` or `ask`
+yields `None` for all three. `snapshotTimeUTC` (not the exchange-local
+`snapshotTime`) is the only timestamp kept, stored as
+`snapshot_time_utc`/`candles_<suffix>.snapshot_time_utc` in the CSV and DB;
+the raw candle JSON itself is not persisted anywhere.
 
 ### Resolutions
 

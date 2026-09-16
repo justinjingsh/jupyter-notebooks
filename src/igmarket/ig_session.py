@@ -1,4 +1,4 @@
-"""IGSession: just enough of the IG REST API for download_ig_prices.ipynb -
+"""IGSession: just enough of the IG REST API for 01_download_prices.ipynb -
 POST /session to authenticate, then GET /prices/{epic} (Version: 3) with
 resolution/from/to/pageSize/pageNumber to page through history. Mirrors the
 IGSession class in
@@ -12,6 +12,10 @@ BASE_URLS = {
     "demo": "https://demo-api.ig.com/gateway/deal",
     "live": "https://api.ig.com/gateway/deal",
 }
+
+
+class AllowanceExceededError(RuntimeError):
+    """IG reported the historical-data allowance is exhausted."""
 
 
 class IGSession:
@@ -65,10 +69,30 @@ class IGSession:
             timeout=self._TIMEOUT,
         )
         if resp.status_code == 403 and "allowance" in resp.text:
-            raise RuntimeError(f"IG historical-data allowance exceeded: {resp.text}")
+            raise AllowanceExceededError(f"IG historical-data allowance exceeded: {resp.text}")
         if not resp.ok:
             raise RuntimeError(f"API error {resp.status_code}: {resp.text}")
         return resp.json()
+
+    def get_allowance(self, epic, resolution):
+        """Cheap GET /prices/{epic} call (most-recent 1 candle via `max=1`,
+        instead of a `from`/`to` range) just to read metadata.allowance
+        without spending much of it - lets callers check what's left before
+        committing to a full download. If the allowance is already exhausted,
+        even this cheap check gets the same 403 a real download would - that's
+        expected, not a bug, so it's swallowed here and reported as an empty
+        allowance rather than raising, since the whole point of this call is
+        to be a safe pre-flight check."""
+        try:
+            data = self._get(
+                f"/prices/{epic}",
+                version="3",
+                params={"resolution": resolution, "max": 1, "pageSize": 1, "pageNumber": 1},
+            )
+        except AllowanceExceededError:
+            print("  historical-data allowance already exhausted")
+            return {}
+        return data.get("metadata", {}).get("allowance", {})
 
     def get_prices(self, epic, resolution, start, end, page_size=200):
         """Page through GET /prices/{epic} (v3) for [start, end]. Returns

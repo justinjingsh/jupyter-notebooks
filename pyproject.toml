@@ -1,0 +1,31 @@
+[project]
+name = "igmarket"
+version = "0.1.0"
+description = "Pull, store, and backtest IG Markets price history."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "requests",
+    "python-dotenv",
+    "pandas",
+    "numpy",
+    "matplotlib",
+    "yfinance",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "jupyter",
+    "nbconvert",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/igmarket"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
